@@ -1,4 +1,6 @@
 from flask import Flask, request, jsonify
+# from flask import render_template
+
 import joblib
 from recommender import recommend_songs_artists, recommend_songs_artists_batch
 from flask_cors import CORS
@@ -26,7 +28,7 @@ combined_features = model_data['combined_features']
 
 @app.route("/", methods=['GET'])
 def home():
-    return "The Recommender API is running"
+    return "Success"
 
 @app.route("/recommend", methods=["POST"])
 def recommend():
@@ -47,6 +49,8 @@ def recommend():
         top_k = content.get("top_k", 5)
         recommend_type = content.get("recommend_type", "song")
 
+        print("DEBUG result:", filter_by)
+
         result = recommend_songs_artists(
             query=query,
             data=data,
@@ -59,6 +63,8 @@ def recommend():
 
         normalized = []
         seen = set()
+        print("DEBUG result:", result)
+
         for r in result:
             key = f"{r['track_name'].lower()}::{r['artists'].lower()}"
             if key not in seen:
@@ -85,8 +91,8 @@ def recommend_batch():
     content = request.json
     queries = content.get("queries", [])  
     
-    if not isinstance(queries, list) or len(queries) < 2:
-            return jsonify({"error": "'queries' must be a list with at least two strings for batch recommendation"}), 400
+    # if not isinstance(queries, list) or len(queries) < 1:
+    #         return jsonify({"error": "'queries' must be a list with at least two strings for batch recommendation"}), 400
     
     search_by = content.get("search_by", "song")
     filter_by = content.get("filter_by", None)
@@ -111,6 +117,10 @@ def recommend_batch():
 
     return jsonify({"recommendations": results.to_dict(orient="records")}), 200
 
+
+
+
+
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok", "message": "API is healthy"}), 200
@@ -126,5 +136,5 @@ def info():
     }), 200
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(debug=False, host="0.0.0.0", port=port)
