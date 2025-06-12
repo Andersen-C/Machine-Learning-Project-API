@@ -147,18 +147,22 @@ def recommend_songs_artists_batch(
     reference_genre = data.loc[matched_indices[0], 'track_genre']
     reference_album = data.loc[matched_indices[0], 'album_name']
 
-    if filter_by == 'artist':
-        mask = data['artists'].str.lower().str.contains(reference_artist)
-        filtered_data = data[mask].reset_index(drop=True)
-        filtered_features = combined_features[mask.values]
-    elif filter_by == 'genre':
-        mask = data['track_genre'] == reference_genre
-        filtered_data = data[mask].reset_index(drop=True)
-        filtered_features = combined_features[mask.values]
-    elif filter_by == 'album':
-        mask = data['album_name'] == reference_album
-        filtered_data = data[mask].reset_index(drop=True)
-        filtered_features = combined_features[mask.values]
+
+    if isinstance(filter_by, list):
+        if 'artist' in filter_by:
+            mask = filtered_data['artists'].str.lower().str.contains(reference_artist)
+            filtered_data = filtered_data[mask]
+            filtered_features = filtered_features[mask.values]
+
+        if 'genre' in filter_by:
+            mask = filtered_data['track_genre'] == reference_genre
+            filtered_data = filtered_data[mask]
+            filtered_features = filtered_features[mask.values]
+
+        if 'album' in filter_by:
+            mask = filtered_data['album_name'] == reference_album
+            filtered_data = filtered_data[mask]
+            filtered_features = filtered_features[mask.values]
 
     if len(filtered_data) <= 1:
         return f"Not enough data with the filter '{filter_by}' to make recommendations."
@@ -203,4 +207,5 @@ def recommend_songs_artists_batch(
                 .reset_index(drop=True)
             )
 
-    return recommendations.head(number_of_recommendation).reset_index(drop=True)
+    return recommendations.head(number_of_recommendation).reset_index(drop=True).to_dict(orient="records")
+
